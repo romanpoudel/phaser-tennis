@@ -7,6 +7,8 @@ export default class Game extends Phaser.Scene {
     this.paddleRightVelocity = new Phaser.Math.Vector2(0, 0);
     this.leftScore = 0;
     this.rightScore = 0;
+
+    this.paused = false;
   }
 
   create() {
@@ -48,6 +50,9 @@ export default class Game extends Phaser.Scene {
   }
 
   update() {
+    if (this.paused) {
+      return;
+    }
     this.processPlayerInput();
 
     this.updateAI();
@@ -89,23 +94,38 @@ export default class Game extends Phaser.Scene {
   }
 
   checkScore() {
-    if (this.ball.x < -30) {
+    const x = this.ball.x;
+    const leftBounds = -30;
+    const rightBounds = 830;
+
+    if (x >= leftBounds && x <= rightBounds) {
+      return;
+    }
+
+    if (this.ball.x < leftBounds) {
       //scored on the left side
-      this.resetBall();
       this.incrementRightScore();
-    } else if (this.ball.x > 830) {
+    } else if (this.ball.x > rightBounds) {
       //scored on the right side
-      this.resetBall();
       this.incrementLeftScore();
     }
 
-    const maxScore = 7;
+    const maxScore = 2;
     if (this.leftScore >= maxScore) {
       //left player wins
+      this.paused = true;
       console.log('Player won');
     } else if (this.rightScore >= maxScore) {
       //AI wins
+      this.paused = true;
       console.log('AI won');
+    }
+
+    if(!this.paused){
+      this.resetBall();
+    }else{
+      this.ball.active = false;
+      this.physics.world.remove(this.ball.body);
     }
   }
 
@@ -122,7 +142,7 @@ export default class Game extends Phaser.Scene {
   resetBall() {
     this.ball.setPosition(400, 250);
     const angle = Phaser.Math.Between(0, 360);
-    const vec = this.physics.velocityFromAngle(angle, 200);
+    const vec = this.physics.velocityFromAngle(angle, 400);
     this.ball.body.setVelocity(vec.x, vec.y);
   }
 }
