@@ -1,14 +1,18 @@
-import Phaser from 'phaser';
-import { GameBackground } from '../consts/SceneKeys';
+import Phaser, { Scene } from 'phaser';
+import { GameBackground, GameOver } from '../consts/SceneKeys';
 import * as Colors from '../consts/Colors';
 
+const GameState = {
+  Running: 'running',
+  PlayerWon: 'player-won',
+  AIWon: 'ai-won',
+};
 export default class Game extends Phaser.Scene {
   init() {
+    this.gameState = GameState.Running;
     this.paddleRightVelocity = new Phaser.Math.Vector2(0, 0);
     this.leftScore = 0;
     this.rightScore = 0;
-
-    this.paused = false;
   }
 
   create() {
@@ -50,7 +54,7 @@ export default class Game extends Phaser.Scene {
   }
 
   update() {
-    if (this.paused) {
+    if (this.gameState !== GameState.Running) {
       return;
     }
     this.processPlayerInput();
@@ -113,19 +117,25 @@ export default class Game extends Phaser.Scene {
     const maxScore = 2;
     if (this.leftScore >= maxScore) {
       //left player wins
-      this.paused = true;
-      console.log('Player won');
+      this.gameState = GameState.PlayerWon;
     } else if (this.rightScore >= maxScore) {
       //AI wins
-      this.paused = true;
-      console.log('AI won');
+      this.gameState = GameState.AIWon;
     }
 
-    if(!this.paused){
+    if (this.gameState === GameState.Running) {
       this.resetBall();
-    }else{
+    } else {
       this.ball.active = false;
       this.physics.world.remove(this.ball.body);
+
+      this.scene.stop(GameBackground);
+
+      //gameover scene
+      this.scene.start(GameOver, {
+        leftScore: this.leftScore,
+        rightScore: this.rightScore,
+      });
     }
   }
 
