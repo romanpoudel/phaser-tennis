@@ -1,6 +1,7 @@
 import Phaser, { Scene } from 'phaser';
 import { GameBackground, GameOver } from '../consts/SceneKeys';
 import * as Colors from '../consts/Colors';
+import { PressStart2P } from '../consts/Fonts';
 
 const GameState = {
   Running: 'running',
@@ -38,7 +39,7 @@ export default class Game extends Phaser.Scene {
     this.physics.add.collider(this.ball, this.paddleRight);
 
     //score
-    const scoreStyle = { fontSize: 48, fontFamily: '"Press Start 2P"' };
+    const scoreStyle = { fontSize: 48, fontFamily: PressStart2P };
     this.leftScoreLabel = this.add
       .text(300, 125, '0', scoreStyle)
       .setOrigin(0.5);
