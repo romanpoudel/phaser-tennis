@@ -2,6 +2,7 @@ import Phaser, { Scene } from 'phaser';
 import { GameBackground, GameOver } from '../consts/SceneKeys';
 import * as Colors from '../consts/Colors';
 import { PressStart2P } from '../consts/Fonts';
+import * as AudioKeys from '../consts/AudioKeys';
 
 const GameState = {
   Running: 'running',
@@ -25,9 +26,10 @@ export default class Game extends Phaser.Scene {
     //to make the ball use circle physics
     this.ball.body.setCircle(10);
     this.ball.body.setBounce(1, 1);
+    this.ball.body.setMaxSpeed(400);
 
     this.ball.body.setCollideWorldBounds(true, 1, 1);
-    // this.resetBall();
+    this.ball.body.onWorldBounds = true;
 
     this.paddleLeft = this.add.rectangle(30, 250, 30, 100, Colors.White);
     this.physics.add.existing(this.paddleLeft, true);
@@ -35,8 +37,10 @@ export default class Game extends Phaser.Scene {
     this.paddleRight = this.add.rectangle(750, 250, 30, 100, Colors.White);
     this.physics.add.existing(this.paddleRight, true);
 
-    this.physics.add.collider(this.ball, this.paddleLeft);
-    this.physics.add.collider(this.ball, this.paddleRight);
+    this.physics.add.collider(this.ball, this.paddleLeft,this.handlePaddleBallCollision,undefined,this);
+    this.physics.add.collider(this.ball, this.paddleRight,this.handlePaddleBallCollision,undefined,this);
+
+    this.physics.world.on('worldbounds',this.handleBallWorldBoundsCollision,this);
 
     //score
     const scoreStyle = { fontSize: 48, fontFamily: PressStart2P };
@@ -49,7 +53,7 @@ export default class Game extends Phaser.Scene {
 
     this.cursors = this.input.keyboard.createCursorKeys();
 
-    this.time.delayedCall(1500, () => {
+    this.time.delayedCall(1000, () => {
       this.resetBall();
     });
   }
@@ -63,6 +67,24 @@ export default class Game extends Phaser.Scene {
     this.updateAI();
 
     this.checkScore();
+  }
+
+  handleBallWorldBoundsCollision(body, up, down, left, right) {
+    if (left || right) {
+      return;
+    }
+    this.sound.play(AudioKeys.PongPlop);
+  }
+
+  handlePaddleBallCollision(paddle,ball){
+    this.sound.play(AudioKeys.PongBeep);
+
+    const body=this.ball.body
+    const vel=body.velocity;
+    vel.x*=1.05;
+    vel.y*=1.05;
+
+    body.setVelocity(vel.x,vel.y);
   }
 
   processPlayerInput() {
@@ -115,7 +137,7 @@ export default class Game extends Phaser.Scene {
       this.incrementLeftScore();
     }
 
-    const maxScore = 2;
+    const maxScore = 7;
     if (this.leftScore >= maxScore) {
       //left player wins
       this.gameState = GameState.PlayerWon;
@@ -153,7 +175,7 @@ export default class Game extends Phaser.Scene {
   resetBall() {
     this.ball.setPosition(400, 250);
     const angle = Phaser.Math.Between(0, 360);
-    const vec = this.physics.velocityFromAngle(angle, 400);
+    const vec = this.physics.velocityFromAngle(angle, 300);
     this.ball.body.setVelocity(vec.x, vec.y);
   }
 }
